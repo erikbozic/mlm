@@ -1,0 +1,27 @@
+# github.com/gogo/protobuf v1.3.0
+github.com/gogo/protobuf/gogoproto
+github.com/gogo/protobuf/proto
+github.com/gogo/protobuf/sortkeys
+github.com/gogo/protobuf/protoc-gen-gogo/descriptor
+# github.com/mesos/mesos-go v0.0.10
+github.com/mesos/mesos-go/api/v1/lib
+github.com/mesos/mesos-go/api/v1/lib/httpcli
+github.com/mesos/mesos-go/api/v1/lib/httpcli/httpmaster
+github.com/mesos/mesos-go/api/v1/lib/master
+github.com/mesos/mesos-go/api/v1/lib/master/calls
+github.com/mesos/mesos-go/api/v1/lib/encoding
+github.com/mesos/mesos-go/api/v1/lib/roles
+github.com/mesos/mesos-go/api/v1/lib/client
+github.com/mesos/mesos-go/api/v1/lib/debug
+github.com/mesos/mesos-go/api/v1/lib/encoding/codecs
+github.com/mesos/mesos-go/api/v1/lib/encoding/framing
+github.com/mesos/mesos-go/api/v1/lib/httpcli/apierrors
+github.com/mesos/mesos-go/api/v1/lib/recordio
+github.com/mesos/mesos-go/api/v1/lib/allocator
+github.com/mesos/mesos-go/api/v1/lib/maintenance
+github.com/mesos/mesos-go/api/v1/lib/quota
+github.com/mesos/mesos-go/api/v1/lib/encoding/json
+github.com/mesos/mesos-go/api/v1/lib/encoding/proto
+# github.com/pquerna/ffjson v0.0.0-20190813045741-dac163c6c0a9
+github.com/pquerna/ffjson/fflib/v1
+github.com/pquerna/ffjson/fflib/v1/internal

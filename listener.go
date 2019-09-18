@@ -114,7 +114,7 @@ func (l *Listener) Listen(output chan string) error {
 		r := e.GetReadFile()
 
 		// initial call to get size
-		if offset == 0 {
+		if initial {
 			if r.GetSize() > 2000 {
 				offset = r.GetSize() - 2000
 			}

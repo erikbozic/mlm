@@ -23,9 +23,8 @@ func NewMonitor(parameters []MonitorParameter) *Monitor {
 }
 
 // Start sets up listeners for all specified tasks
-func (m *Monitor) Start(output chan string) {
+func (m *Monitor)Start(output chan string) {
 	for _, p := range m.parameters {
-
 		// TODO filename could be configurable
 		stdOutListener := NewListener("stdout", p.Task, p.Agent)
 		stdErrListener := NewListener("stderr", p.Task, p.Agent)

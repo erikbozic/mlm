@@ -7,7 +7,6 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli/httpmaster"
 	"github.com/mesos/mesos-go/api/v1/lib/master/calls"
 	"log"
-	"time"
 )
 
 var (
@@ -15,10 +14,9 @@ var (
 )
 
 func main() {
-
 	var mesosMasterUrl string
-
-	flag.StringVar(&mesosMasterUrl, "master", "", "http url of mesos master (e.g.: http://localhost:5050) " )
+	flag.StringVar(&mesosMasterUrl, "master", "", "http url of mesos master (e.g.: http://localhost:5050)")
+	flag.StringVar(&mesosMasterUrl, "m", "", "http url of mesos master (e.g.: http://localhost:5050)")
 	flag.Parse()
 
 	input := UserInput{}
@@ -48,8 +46,8 @@ func main() {
 		err = askForTasks(&input, tasks)
 	}
 
-
-	for name, t := range tasks {
+	logStream := make(chan string)
+	for name, task := range tasks {
 		isSelected := false
 		for _, selectedName := range input.SelectedTaskNames {
 			if name == selectedName {
@@ -62,29 +60,20 @@ func main() {
 			continue
 		}
 
-		out := make(chan string)
 		params := make([]MonitorParameter, 0)
-		for _, v := range t {
-			if agentInfo, ok := agents[v.GetAgentID().Value]; ok {
+		for _, taskInstance := range task {
+			if agentInfo, ok := agents[taskInstance.GetAgentID().Value]; ok {
 				param := MonitorParameter{
-					Task:  v,
+					Task:  taskInstance,
 					Agent: agentInfo,
 				}
 				params = append(params, param)
 			}
 		}
-
 		monitor := NewMonitor(params)
-		go monitor.Start(out)
-		go printLogs(out)
+		go monitor.Start(logStream)
 	}
-
-	// TODO surely there's a better way of doing this?
-	for {
-		//printTasks(parameters)
-		//printAgents(agents)
-		time.Sleep(time.Duration(3) * time.Second)
-	}
+	printLogs(logStream)
 }
 
 func printLogs(logs chan string) {

@@ -18,9 +18,10 @@ import (
 
 // Listener streams the content of a file
 type Listener struct {
-	agentSender  calls.Sender
-	task         mesos.Task
-	fileName     string
+	agentSender calls.Sender
+	task        mesos.Task
+	agent       mesos.AgentInfo
+	fileName    string
 }
 
 func NewListener(fileName string, task mesos.Task, agentInfo mesos.AgentInfo) *Listener {
@@ -34,14 +35,12 @@ func NewListener(fileName string, task mesos.Task, agentInfo mesos.AgentInfo) *L
 		agentSender: agentSender,
 		task:        task,
 		fileName:    fileName,
+		agent:       agentInfo,
 	}
 }
 
-
-
 // Listen starts listening to the specified file and streams out the content
 func (l *Listener) Listen(output chan string) error {
-
 	// Get container info
 	resp, err := l.agentSender.Send(context.TODO(), calls.NonStreaming(calls.GetContainers()))
 	if err != nil {
@@ -63,7 +62,6 @@ func (l *Listener) Listen(output chan string) error {
 	}
 
 	// Get flags
-	// Get container info
 	resp, err = l.agentSender.Send(context.TODO(), calls.NonStreaming(calls.GetFlags()))
 	if err != nil {
 		return err
@@ -90,7 +88,7 @@ func (l *Listener) Listen(output chan string) error {
 	}
 
 	// {workdir}/slaves/{agentId}/frameworks/{frameworkId}/executors/{taskId}/runs/{containerId}/stdout
-	fullPath :=  fmt.Sprintf("%s/slaves/%s/frameworks/%s/executors/%s/runs/%s/%s", agentWorkDir, agentId, frameworkId, taskId, containerId, l.fileName)
+	fullPath := fmt.Sprintf("%s/slaves/%s/frameworks/%s/executors/%s/runs/%s/%s", agentWorkDir, agentId, frameworkId, taskId, containerId, l.fileName)
 	offset := uint64(0)
 	initial := true
 	for {
@@ -132,7 +130,7 @@ func (l *Listener) Listen(output chan string) error {
 				if len(strings.TrimSpace(line)) > 0 {
 					// TODO use templates
 					// TODO implement grep like filter. Use a channel to push the filter string to all listeners
-					output <- fmt.Sprintf("[%s]: %s", l.task.GetTaskID().Value, line)
+					output <- fmt.Sprintf("[%s:%d]: %s",l.agent.Hostname, l.task.GetDiscovery().GetPorts().Ports[0].Number, line) //  l.task.GetTaskID().Value
 				}
 			}
 		}

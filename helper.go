@@ -51,7 +51,7 @@ func getTasks() (tasks map[string][]mesos.Task, err error) {
 	}
 
 	for _, task := range e.GetTasks.Tasks {
-		if v, ok := tasks[task.GetName()]; ok {
+		if v, ok := tasks[task.GetName()]; ok { // TODO make sure this only includes active tasks
 			tasks[task.GetName()] = append(v, task)
 		} else {
 			tasks[task.GetName()] = []mesos.Task{task}

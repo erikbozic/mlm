@@ -1,11 +1,24 @@
+# github.com/AlecAivazis/survey/v2 v2.0.4
+github.com/AlecAivazis/survey/v2
+github.com/AlecAivazis/survey/v2/core
+github.com/AlecAivazis/survey/v2/terminal
 # github.com/gogo/protobuf v1.3.0
 github.com/gogo/protobuf/gogoproto
 github.com/gogo/protobuf/proto
 github.com/gogo/protobuf/sortkeys
 github.com/gogo/protobuf/protoc-gen-gogo/descriptor
+# github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
+github.com/kballard/go-shellquote
+# github.com/mattn/go-colorable v0.1.2
+github.com/mattn/go-colorable
+# github.com/mattn/go-isatty v0.0.8
+github.com/mattn/go-isatty
 # github.com/mesos/mesos-go v0.0.10
 github.com/mesos/mesos-go/api/v1/lib
+github.com/mesos/mesos-go/api/v1/lib/agent
+github.com/mesos/mesos-go/api/v1/lib/agent/calls
 github.com/mesos/mesos-go/api/v1/lib/httpcli
+github.com/mesos/mesos-go/api/v1/lib/httpcli/httpagent
 github.com/mesos/mesos-go/api/v1/lib/httpcli/httpmaster
 github.com/mesos/mesos-go/api/v1/lib/master
 github.com/mesos/mesos-go/api/v1/lib/master/calls
@@ -22,6 +35,10 @@ github.com/mesos/mesos-go/api/v1/lib/maintenance
 github.com/mesos/mesos-go/api/v1/lib/quota
 github.com/mesos/mesos-go/api/v1/lib/encoding/json
 github.com/mesos/mesos-go/api/v1/lib/encoding/proto
+# github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b
+github.com/mgutz/ansi
 # github.com/pquerna/ffjson v0.0.0-20190813045741-dac163c6c0a9
 github.com/pquerna/ffjson/fflib/v1
 github.com/pquerna/ffjson/fflib/v1/internal
+# golang.org/x/sys v0.0.0-20190530182044-ad28b68e88f1
+golang.org/x/sys/unix

@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	mesos "github.com/mesos/mesos-go/api/v1/lib"
+	"github.com/mesos/mesos-go/api/v1/lib/agent"
 	"github.com/mesos/mesos-go/api/v1/lib/agent/calls"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli/httpagent"
@@ -16,12 +18,12 @@ import (
 
 // Listener streams the content of a file
 type Listener struct {
-	agentSender calls.Sender
-	task        mesos.Task
-	filePath    string
+	agentSender  calls.Sender
+	task         mesos.Task
+	fileName     string
 }
 
-func NewListener(filePath string, task mesos.Task, agentInfo mesos.AgentInfo) *Listener {
+func NewListener(fileName string, task mesos.Task, agentInfo mesos.AgentInfo) *Listener {
 	if task.AgentID.Value != agentInfo.ID.Value {
 		panic("tasks agent id doesn't match provided agent info") // err? constructor should be safe though... MustNewListener ?
 	}
@@ -31,15 +33,72 @@ func NewListener(filePath string, task mesos.Task, agentInfo mesos.AgentInfo) *L
 	return &Listener{
 		agentSender: agentSender,
 		task:        task,
-		filePath:    filePath,
+		fileName:    fileName,
 	}
 }
 
+
+
 // Listen starts listening to the specified file and streams out the content
 func (l *Listener) Listen(output chan string) error {
+
+	// Get container info
+	resp, err := l.agentSender.Send(context.TODO(), calls.NonStreaming(calls.GetContainers()))
+	if err != nil {
+		return err
+	}
+	var r agent.Response
+	err = resp.Decode(&r)
+	if err != nil {
+		return err
+	}
+
+	containers := r.GetGetContainers().GetContainers()
+	containerId := ""
+	for _, c := range containers {
+		if c.GetExecutorID().Value == l.task.GetTaskID().Value { // TODO assuming this is ok. Doublecheck
+			containerId = c.GetContainerID().Value
+			break
+		}
+	}
+
+	// Get flags
+	// Get container info
+	resp, err = l.agentSender.Send(context.TODO(), calls.NonStreaming(calls.GetFlags()))
+	if err != nil {
+		return err
+	}
+	err = resp.Decode(&r)
+	if err != nil {
+		return err
+	}
+
+	agentWorkDir := ""
+	flags := r.GetGetFlags().GetFlags()
+	for _, f := range flags {
+		if f.GetName() == "work_dir" {
+			agentWorkDir = f.GetValue()
+		}
+	}
+
+	agentId := l.task.GetAgentID().Value
+	frameworkId := l.task.GetFrameworkID().Value
+	taskId := l.task.GetTaskID().Value
+
+	if containerId == "" {
+		return errors.New("container not found")
+	}
+
+	// {workdir}/slaves/{agentId}/frameworks/{frameworkId}/executors/{taskId}/runs/{containerId}/stdout
+	fullPath :=  fmt.Sprintf("%s/slaves/%s/frameworks/%s/executors/%s/runs/%s/%s", agentWorkDir, agentId, frameworkId, taskId, containerId, l.fileName)
 	offset := uint64(0)
+	initial := true
 	for {
-		resp, err := l.agentSender.Send(context.TODO(), calls.NonStreaming(calls.ReadFile(l.filePath, offset)))
+		if initial {
+			resp, err = l.agentSender.Send(context.TODO(), calls.NonStreaming(calls.ReadFileWithLength(fullPath, offset, 0))) // only to get the current size
+		} else {
+			resp, err = l.agentSender.Send(context.TODO(), calls.NonStreaming(calls.ReadFile(fullPath, offset))) // read to the end of the file
+		}
 
 		if err != nil {
 			return err
@@ -53,8 +112,20 @@ func (l *Listener) Listen(output chan string) error {
 		}
 
 		r := e.GetReadFile()
+
+		// initial call to get size
+		if offset == 0 {
+			if r.GetSize() > 2000 {
+				offset = r.GetSize() - 2000
+			}
+			initial = false
+			continue
+		} else {
+			offset = r.GetSize()
+		}
+
 		data := r.GetData()
-		offset = r.GetSize()
+
 		if len(data) != 0 {
 			lines := strings.Split(string(data), "\n")
 			for _, line := range lines {

@@ -1,4 +1,4 @@
-# MLM - Mesos Log Monitor
+# MLM - Mesos Log Monitor [![Actions Status](https://github.com/erikbozic/mlm/workflows/go-build/badge.svg)](https://github.com/erikbozic/mlm/actions)
 **Work in progress!**    
 Command line tool for monitoring mesos task logs
 

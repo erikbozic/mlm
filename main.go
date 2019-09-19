@@ -15,6 +15,7 @@ var (
 	masterSender calls.Sender
 	input		 *UserInput
 	logStream    chan string
+	commandStream chan string
 )
 
 func main() {
@@ -36,10 +37,11 @@ func main() {
 	uri := fmt.Sprintf("%s/api/v1", mesosMasterUrl)
 	masterSender = httpmaster.NewSender(httpcli.New(httpcli.Endpoint(uri)).Send)
 
-	mainLoop(input)
+	start(input) // asks for task selection and starts monitor/listeners in goroutines
+	handleInput()
 }
 
-func mainLoop(input *UserInput) {
+func start(input *UserInput) {
 	input.SelectedTaskNames = nil
 	fmt.Println("discovery...")
 	tasks, err := getTasks()
@@ -57,7 +59,7 @@ func mainLoop(input *UserInput) {
 	}
 
 	logStream = make(chan string)
-	commandStream := make(chan string) // TODO make command types
+	commandStream 	= make(chan string) // TODO make command types
 
 	for name, task := range tasks {
 		isSelected := false
@@ -86,17 +88,21 @@ func mainLoop(input *UserInput) {
 		go monitor.Start(logStream, commandStream)
 	}
 	go printLogs()
-	handleInput(commandStream)
 }
 
-func handleInput(commandChannel chan string) {
+func handleInput() {
 	reader := bufio.NewReader(os.Stdin)
 	for {
 		text, _ := reader.ReadString('\n')
 		if text == ":b\n" { // back
-			close(commandChannel) // will stop all listeners
-			close(logStream) // will close printLogs func
-			mainLoop(input) // wil show the task selection survey again TODO this winds up the stack, fix it.
+			close(commandStream) // will stop all listeners
+			close(logStream)     // will stop printLogs func
+			start(input)         // wil show the task selection survey again
+		} else 	if text == ":q\n" { // quit
+			close(commandStream) // will stop all listeners
+			close(logStream) // will stop printLogs func
+			log.Println("bye!")
+			os.Exit(0)
 		}
 	}
 }

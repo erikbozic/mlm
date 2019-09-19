@@ -9,3 +9,4 @@ This will get all tasks known to master and let you specify tasks which you want
 
 # Commands
  - `:b`: when monitoring issue this command to stop listening and return you to the task selection  
+ - `:q`: when monitoring issue this command to stop listening and quit the program  

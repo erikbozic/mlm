@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	configDirName  = "mesos-monitor"
-	configFileName = "mesos-monitor.json"
+	configDirName  = "mlm"
+	configFileName = "mlm.json"
 )
 
 func init() {
@@ -25,12 +25,6 @@ func init() {
 		if err != nil {
 			log.Println("error creating config dir:", err.Error())
 		}
-
-		f, err := os.Create(configFilePath)
-		if err != nil {
-			log.Println("error creating config file:", err.Error())
-		}
-		defer f.Close()
 	}
 }
 
@@ -44,6 +38,9 @@ type MonitorConfig struct {
 }
 
 func ReadConfig() (cfg MonitorConfig) {
+	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
+		return cfg
+	}
 	file, err := ioutil.ReadFile(configFilePath)
 	if err != nil {
 		log.Println("error reading config file:", err.Error())

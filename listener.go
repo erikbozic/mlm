@@ -10,7 +10,7 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli/httpagent"
 	"log"
-	"mesos-monitor/commands"
+	"mlm/commands"
 	"net"
 	"strconv"
 	"strings"
@@ -19,6 +19,7 @@ import (
 
 const (
 	maxLogSize = 2000
+	pollInterval = 500
 )
 
 // Listener streams the content of a file
@@ -132,11 +133,11 @@ func (l *Listener) Listen(output chan string, commandStream chan commands.Comman
 			lines := strings.Split(string(data), "\n")
 			for _, line := range lines {
 				if len(strings.TrimSpace(line)) > 0 {
-					// TODO use templates
+
 					if l.filterString != "" && !strings.Contains(line, l.filterString) {
 						continue
 					}
-
+					// TODO use templates
 					output <- fmt.Sprintf("[%s]: %s", l.logIdentifier, line)
 				}
 			}
@@ -144,7 +145,7 @@ func (l *Listener) Listen(output chan string, commandStream chan commands.Comman
 
 		select {
 		case <-timer:
-			timer = time.After(time.Duration(1000) * time.Millisecond)
+			timer = time.After(time.Duration(pollInterval) * time.Millisecond)
 			continue
 		case _, ok := <-done:
 			if !ok {

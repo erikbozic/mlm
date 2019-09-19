@@ -4,7 +4,7 @@ import (
 	"fmt"
 	mesos "github.com/mesos/mesos-go/api/v1/lib"
 	"log"
-	"mesos-monitor/commands"
+	"mlm/commands"
 )
 
 // Monitors tasks

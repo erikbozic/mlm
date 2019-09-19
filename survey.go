@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/AlecAivazis/survey/v2"
-	mesos "github.com/mesos/mesos-go/api/v1/lib"
 )
 
 type UserInput struct {
@@ -30,14 +29,7 @@ func askForMesosMaster(input *UserInput) error {
 	return nil
 }
 
-func askForTasks(input *UserInput, tasks map[string][]mesos.Task) error {
-	taskNames := make([]string, len(tasks))
-	i := 0
-	for name := range tasks {
-		taskNames[i] = name
-		i++
-	}
-
+func askForTasks(input *UserInput, taskNames []string) error {
 	tasksQ := []*survey.Question{
 		{
 			Name: "SelectedTaskNames",

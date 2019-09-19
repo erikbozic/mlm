@@ -14,6 +14,7 @@ import (
 var (
 	masterSender calls.Sender
 	input		 *UserInput
+	logStream    chan string
 )
 
 func main() {
@@ -55,8 +56,9 @@ func mainLoop(input *UserInput) {
 		err = askForTasks(input, tasks)
 	}
 
-	logStream := make(chan string)
+	logStream = make(chan string)
 	commandStream := make(chan string) // TODO make command types
+
 	for name, task := range tasks {
 		isSelected := false
 		for _, selectedName := range input.SelectedTaskNames {
@@ -83,7 +85,7 @@ func mainLoop(input *UserInput) {
 		monitor := NewMonitor(params)
 		go monitor.Start(logStream, commandStream)
 	}
-	go printLogs(logStream)
+	go printLogs()
 	handleInput(commandStream)
 }
 
@@ -93,14 +95,15 @@ func handleInput(commandChannel chan string) {
 		text, _ := reader.ReadString('\n')
 		if text == ":b\n" { // back
 			close(commandChannel) // will stop all listeners
-			mainLoop(input) // wil show the task selection survey again TODO this winds  up the stack, fix it.
+			close(logStream) // will close printLogs func
+			mainLoop(input) // wil show the task selection survey again TODO this winds up the stack, fix it.
 		}
 	}
 }
 
 
-func printLogs(logs chan string) {
-	for text := range logs {
+func printLogs() {
+	for text := range logStream {
 		fmt.Println(text)
 	}
 }

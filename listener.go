@@ -44,7 +44,7 @@ func NewListener(fileName string, task mesos.Task, agentInfo mesos.AgentInfo) (*
 }
 
 // Listen starts listening to the specified file and streams out the content
-func (l *Listener) Listen(output chan string, commandStream chan string) {
+func (l *Listener) Listen(output chan string, done chan struct{}) {
 	// Get container info
 	containers, err := l.getContainers() // r.GetGetContainers().getContainers()
 	if err != nil {
@@ -138,7 +138,7 @@ func (l *Listener) Listen(output chan string, commandStream chan string) {
 			case <-timer:
 				timer = time.After(time.Duration(1000) * time.Millisecond)
 				continue
-			case _, ok := <-commandStream:
+			case _, ok := <-done:
 				if !ok {
 					stopReqested = true
 					break

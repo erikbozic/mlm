@@ -24,7 +24,7 @@ func NewMonitor(parameters []MonitorParameter) *Monitor {
 }
 
 // Start sets up listeners for all specified tasks
-func (m *Monitor) Start(output chan string, commandStream chan string) {
+func (m *Monitor) Start(output chan string, done chan struct{}) {
 	for _, p := range m.parameters {
 		// TODO filename could be configurable
 
@@ -41,8 +41,8 @@ func (m *Monitor) Start(output chan string, commandStream chan string) {
 		}
 
 		// TODO what about: http://mesos.apache.org/documentation/latest/operator-http-api/#attach_container_output
-		go stdOutListener.Listen(output, commandStream)
-		go stdErrListener.Listen(output, commandStream)
+		go stdOutListener.Listen(output, done)
+		go stdErrListener.Listen(output, done)
 
 	}
 }

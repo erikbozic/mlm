@@ -25,8 +25,8 @@ func NewMonitor(parameters []MonitorParameter) *Monitor {
 }
 
 // Start sets up listeners for all specified tasks
-func (m *Monitor) Start(output, commandStream chan string, done chan struct{}) {
-	commandChannels := make([]chan string, 0)
+func (m *Monitor) Start(output chan string, commandStream chan Command, done chan struct{}) {
+	commandChannels := make([]chan Command, 0)
 	for _, p := range m.parameters {
 		// TODO filename could be configurable
 
@@ -42,8 +42,8 @@ func (m *Monitor) Start(output, commandStream chan string, done chan struct{}) {
 			continue
 		}
 
-		c1 := make(chan string)
-		c2 := make(chan string)
+		c1 := make(chan Command)
+		c2 := make(chan Command)
 		commandChannels = append(commandChannels, c1)
 		commandChannels = append(commandChannels, c2)
 

@@ -9,6 +9,7 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib/master/calls"
 	"log"
 	"os"
+	"strings"
 )
 
 var (
@@ -16,7 +17,7 @@ var (
 	input        *UserInput
 	logStream    chan string
 	done         chan struct{}
-	commandStream chan string
+	commandStream chan Command
 )
 
 func main() {
@@ -61,7 +62,7 @@ func start(input *UserInput) {
 
 	logStream = make(chan string)
 	done = make(chan struct{})
-	commandStream = make(chan string)
+	commandStream = make(chan Command)
 
 	params := make([]MonitorParameter, 0)
 	// build monitor params
@@ -107,9 +108,9 @@ func handleInput() {
 			log.Println("bye!")
 			os.Exit(0)
 		} else if text == ":a\n" { // test
-			commandStream <- ":a"
-			log.Println(":a handled!")
-
+			commandStream <- NewTestCommand("test", nil)
+		} else if strings.HasPrefix(text, ":f") { // filter
+			commandStream <- NewFilterCommand(strings.TrimSpace(strings.TrimPrefix(text, ":f")))
 		}
 	}
 }

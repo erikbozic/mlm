@@ -22,10 +22,12 @@ const (
 
 // Listener streams the content of a file
 type Listener struct {
-	agentSender calls.Sender
-	task        mesos.Task
-	agent       mesos.AgentInfo
-	fileName    string
+	agentSender   calls.Sender
+	task          mesos.Task
+	agent         mesos.AgentInfo
+	fileName      string
+	logIdentifier string
+	filterString  string
 }
 
 func NewListener(fileName string, task mesos.Task, agentInfo mesos.AgentInfo) (*Listener, error) {
@@ -33,6 +35,7 @@ func NewListener(fileName string, task mesos.Task, agentInfo mesos.AgentInfo) (*
 		return nil, errors.New("tasks agent id doesn't match provided agent info")
 	}
 
+	// TODO https?
 	agentUrl := fmt.Sprintf("http://%s/api/v1", net.JoinHostPort(agentInfo.GetHostname(), strconv.Itoa(int(agentInfo.GetPort()))))
 	agentSender := httpagent.NewSender(httpcli.New(httpcli.Endpoint(agentUrl)).Send)
 	return &Listener{
@@ -44,7 +47,7 @@ func NewListener(fileName string, task mesos.Task, agentInfo mesos.AgentInfo) (*
 }
 
 // Listen starts listening to the specified file and streams out the content
-func (l *Listener) Listen(output chan string, commandStream chan string, done chan struct{}) {
+func (l *Listener) Listen(output chan string, commandStream chan Command, done chan struct{}) {
 	// Get container info
 	containers, err := l.getContainers() // r.GetGetContainers().getContainers()
 	if err != nil {
@@ -87,7 +90,7 @@ func (l *Listener) Listen(output chan string, commandStream chan string, done ch
 	timer := time.After(time.Duration(1000) * time.Millisecond)
 	stopReqested := false
 	// TODO configurable log identifiers
-	logIdentifier := fmt.Sprintf("%s:%d", l.agent.Hostname, l.task.GetDiscovery().GetPorts().Ports[0].Number) //  l.task.GetTaskID().Value
+	l.logIdentifier = fmt.Sprintf("%s:%d", l.agent.Hostname, l.task.GetDiscovery().GetPorts().Ports[0].Number) //  l.task.GetTaskID().Value
 
 	// listen loop
 	for {
@@ -129,8 +132,11 @@ func (l *Listener) Listen(output chan string, commandStream chan string, done ch
 			for _, line := range lines {
 				if len(strings.TrimSpace(line)) > 0 {
 					// TODO use templates
+					if l.filterString != "" && !strings.Contains(line, l.filterString) {
+						continue
+					}
 					// TODO implement grep like filter. Use a channel to push the filter string to all listeners
-					output <- fmt.Sprintf("[%s]: %s", logIdentifier, line)
+					output <- fmt.Sprintf("[%s]: %s", l.logIdentifier, line)
 				}
 			}
 		}
@@ -145,14 +151,21 @@ func (l *Listener) Listen(output chan string, commandStream chan string, done ch
 					break
 				}
 			case cmd := <- commandStream:
-				if cmd == ":a" {
-					log.Printf(":a in listener %s!\n", logIdentifier)
-				}
+				l.handleCommand(cmd)
 		}
 		if stopReqested {
-			log.Println("stop listening to ", logIdentifier)
+			log.Println("stop listening to ", l.logIdentifier)
 			return
 		}
+	}
+}
+
+func (l *Listener) handleCommand(cmd Command) {
+	// TODO type switch better? and then we can get typed parameters?
+	if cmd.Name() == "test" {
+		log.Printf("%s command in listener %s!\n", cmd.Name(), l.logIdentifier)
+	} else if cmd.Name() == FilterCommandName {
+		l.filterString =  cmd.Parameters()[0]
 	}
 }
 

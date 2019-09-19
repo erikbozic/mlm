@@ -39,7 +39,7 @@ func NewListener(fileName string, task mesos.Task, agentInfo mesos.AgentInfo) *L
 }
 
 // Listen starts listening to the specified file and streams out the content
-func (l *Listener) Listen(output chan string) {
+func (l *Listener) Listen(output chan string, commandStream chan string) {
 	// Get container info
 	containers, err := l.getContainers() // r.GetGetContainers().getContainers()
 	if err != nil {
@@ -79,6 +79,11 @@ func (l *Listener) Listen(output chan string) {
 	offset := uint64(0)
 	initial := true
 	var resp mesos.Response
+	timer := time.After(time.Duration(1000) * time.Millisecond)
+	stopReqested := false
+	// TODO configurable log identifiers
+	logIdentifier := fmt.Sprintf("%s:%d", l.agent.Hostname, l.task.GetDiscovery().GetPorts().Ports[0].Number)  //  l.task.GetTaskID().Value
+
 	// listen loop
 	for {
 		if initial {
@@ -112,6 +117,8 @@ func (l *Listener) Listen(output chan string) {
 			offset = r.GetSize()
 		}
 
+
+
 		data := r.GetData()
 		if len(data) != 0 {
 			lines := strings.Split(string(data), "\n")
@@ -119,12 +126,29 @@ func (l *Listener) Listen(output chan string) {
 				if len(strings.TrimSpace(line)) > 0 {
 					// TODO use templates
 					// TODO implement grep like filter. Use a channel to push the filter string to all listeners
-					output <- fmt.Sprintf("[%s:%d]: %s", l.agent.Hostname, l.task.GetDiscovery().GetPorts().Ports[0].Number, line) //  l.task.GetTaskID().Value
+					output <- fmt.Sprintf("[%s]: %s", logIdentifier, line)
 				}
 			}
 		}
-		// TODO sleep should be configurable
-		time.Sleep(time.Duration(1000) * time.Millisecond)
+
+		select {
+			case  <- timer:
+				timer = time.After(time.Duration(1000) * time.Millisecond)
+				continue
+			case command, ok := <- commandStream:
+				if !ok {
+					stopReqested = true
+					break
+				}
+				if command == ":b" {
+					stopReqested = true
+					break
+				}
+		}
+		if stopReqested {
+			log.Println("stop listening to ", logIdentifier)
+			return
+		}
 	}
 }
 

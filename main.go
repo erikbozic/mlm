@@ -98,7 +98,7 @@ func handleInput() {
 	reader := bufio.NewReader(os.Stdin)
 	for {
 		text, _ := reader.ReadString('\n')
-		if text == ":b\n" { // back
+		if text == ":b\n" { // back (to task selection)
 			close(done)      // will stop all listeners
 			close(logStream) // will stop printLogs func
 			start(input)     // wil show the task selection survey again
@@ -110,7 +110,9 @@ func handleInput() {
 		} else if text == ":a\n" { // test
 			commandStream <- NewTestCommand("test", nil)
 		} else if strings.HasPrefix(text, ":f") { // filter
-			commandStream <- NewFilterCommand(strings.TrimSpace(strings.TrimPrefix(text, ":f")))
+			filterText := strings.TrimSpace(strings.TrimPrefix(text, ":f"))
+			commandStream <- NewFilterCommand(filterText)
+			log.Printf("filter set to: \"%s\" on all listeners", filterText )
 		}
 	}
 }

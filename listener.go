@@ -135,7 +135,7 @@ func (l *Listener) Listen(output chan string, commandStream chan Command, done c
 					if l.filterString != "" && !strings.Contains(line, l.filterString) {
 						continue
 					}
-					// TODO implement grep like filter. Use a channel to push the filter string to all listeners
+
 					output <- fmt.Sprintf("[%s]: %s", l.logIdentifier, line)
 				}
 			}

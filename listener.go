@@ -49,9 +49,9 @@ func NewListener(fileName string, task mesos.Task, agentInfo mesos.AgentInfo) (*
 }
 
 // Listen starts listening to the specified file and streams out the content
-func (l *Listener) Listen(output chan string, commandStream chan commands.Command, done chan struct{}) {
+func (l *Listener) Listen(output chan<- string, commandStream <-chan commands.Command, done <-chan struct{}) {
 	// Get container info
-	containers, err := l.getContainers() // r.GetGetContainers().getContainers()
+	containers, err := l.getContainers()
 	if err != nil {
 		log.Println("error while getting containers: ", err.Error())
 		return
@@ -89,10 +89,10 @@ func (l *Listener) Listen(output chan string, commandStream chan commands.Comman
 	offset := uint64(0)
 	initial := true
 	var resp mesos.Response
-	timer := time.After(time.Duration(1000) * time.Millisecond)
-	stopReqested := false
+	timer := time.After(time.Duration(pollInterval) * time.Millisecond)
+	stopRequested := false
 	// TODO configurable log identifiers
-	l.logIdentifier = fmt.Sprintf("%s:%d", l.agent.Hostname, l.task.GetDiscovery().GetPorts().Ports[0].Number) //  l.task.GetTaskID().Value
+	l.logIdentifier = fmt.Sprintf("%s:%d", l.agent.Hostname, l.task.GetDiscovery().GetPorts().Ports[0].Number)
 
 	// listen loop
 	for {
@@ -149,13 +149,13 @@ func (l *Listener) Listen(output chan string, commandStream chan commands.Comman
 			continue
 		case _, ok := <-done:
 			if !ok {
-				stopReqested = true
+				stopRequested = true
 				break
 			}
 		case cmd := <-commandStream:
 			l.handleCommand(cmd)
 		}
-		if stopReqested {
+		if stopRequested {
 			log.Println("stop listening to ", l.logIdentifier)
 			return
 		}

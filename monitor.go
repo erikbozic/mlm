@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	mesos "github.com/mesos/mesos-go/api/v1/lib"
 	"log"
 	"mlm/commands"
@@ -26,11 +25,10 @@ func NewMonitor(parameters []MonitorParameter) *Monitor {
 }
 
 // Start sets up listeners for all specified tasks
-func (m *Monitor) Start(output chan string, commandStream chan commands.Command, done chan struct{}) {
-	commandChannels := make([]chan commands.Command, 0)
+func (m *Monitor) Start(output chan string, commandStream <-chan commands.Command, done chan struct{}) {
+	commandChannels := make([]chan<- commands.Command, 0)
 	for _, p := range m.parameters {
 		// TODO filename could be configurable
-
 		stdOutListener, err := NewListener("stdout", p.Task, p.Agent)
 		if err != nil {
 			log.Println("error creating listener: ", err.Error())
@@ -56,7 +54,10 @@ func (m *Monitor) Start(output chan string, commandStream chan commands.Command,
 		select {
 		case command, ok := <-commandStream:
 			if !ok {
-				fmt.Printf("closed command channel... ?")
+				log.Printf("closed command channel... ?")
+				for _, c := range commandChannels {
+					close(c)
+				}
 				return
 			}
 			for _, c := range commandChannels {

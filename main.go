@@ -77,11 +77,14 @@ func start(input *UserInput) {
 			i++
 		}
 		err = askForTasks(input, taskNames)
+	} else {
+		log.Println("didn't get any active tasks from master!\nbye!")
+		os.Exit(0)
 	}
 
+	commandStream = make(chan commands.Command)
 	logStream = make(chan string)
 	done = make(chan struct{})
-	commandStream = make(chan commands.Command)
 
 	params := make([]MonitorParameter, 0)
 	// build monitor params
@@ -105,7 +108,9 @@ func start(input *UserInput) {
 					Agent: agentInfo,
 				}
 				params = append(params, param)
-			} // TODO didn't find the agent for this task
+			} else {
+				log.Printf("didn't find agent on which task %s is running", taskInstance.GetTaskID().Value)
+			}
 		}
 	}
 	monitor := NewMonitor(params)

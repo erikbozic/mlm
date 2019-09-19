@@ -143,16 +143,16 @@ func (l *Listener) Listen(output chan string, commandStream chan commands.Comman
 		}
 
 		select {
-			case <-timer:
-				timer = time.After(time.Duration(1000) * time.Millisecond)
-				continue
-			case _, ok := <-done:
-				if !ok {
-					stopReqested = true
-					break
-				}
-			case cmd := <- commandStream:
-				l.handleCommand(cmd)
+		case <-timer:
+			timer = time.After(time.Duration(1000) * time.Millisecond)
+			continue
+		case _, ok := <-done:
+			if !ok {
+				stopReqested = true
+				break
+			}
+		case cmd := <-commandStream:
+			l.handleCommand(cmd)
 		}
 		if stopReqested {
 			log.Println("stop listening to ", l.logIdentifier)
@@ -166,7 +166,7 @@ func (l *Listener) handleCommand(cmd commands.Command) {
 	if cmd.Name() == "test" {
 		log.Printf("%s command in listener %s!\n", cmd.Name(), l.logIdentifier)
 	} else if cmd.Name() == commands.FilterCommandName {
-		l.filterString =  cmd.Parameters()[0]
+		l.filterString = cmd.Parameters()[0]
 	}
 }
 

@@ -54,7 +54,7 @@ func (m *Monitor) Start(output chan string, commandStream chan commands.Command,
 
 	for {
 		select {
-		case command, ok := <- commandStream:
+		case command, ok := <-commandStream:
 			if !ok {
 				fmt.Printf("closed command channel... ?")
 				return

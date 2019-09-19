@@ -42,9 +42,9 @@ func askForTasks(input *UserInput, tasks map[string][]mesos.Task) error {
 		{
 			Name: "SelectedTaskNames",
 			Prompt: &survey.MultiSelect{
-				Message: "Selected tasks which you wish to monitor",
-				Options: taskNames,
-				Help:    "Will monitor all instances of selected tasks",
+				Message:  "Selected tasks which you wish to monitor",
+				Options:  taskNames,
+				Help:     "Will monitor all instances of selected tasks",
 				PageSize: 15,
 			},
 			Validate: survey.Required,

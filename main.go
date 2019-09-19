@@ -15,10 +15,10 @@ import (
 )
 
 var (
-	masterSender calls.Sender
-	input        *UserInput
-	logStream    chan string
-	done         chan struct{}
+	masterSender  calls.Sender
+	input         *UserInput
+	logStream     chan string
+	done          chan struct{}
 	commandStream chan commands.Command
 )
 
@@ -125,7 +125,7 @@ func handleInput() {
 		} else if strings.HasPrefix(text, ":f") { // filter
 			filterText := strings.TrimSpace(strings.TrimPrefix(text, ":f"))
 			commandStream <- commands.NewFilterCommand(filterText)
-			log.Printf("filter set to: \"%s\" on all listeners", filterText )
+			log.Printf("filter set to: \"%s\" on all listeners", filterText)
 		}
 	}
 }

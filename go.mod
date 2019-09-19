@@ -1,4 +1,4 @@
-module mesos-monitor
+module mlm
 
 go 1.12
 

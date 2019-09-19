@@ -8,8 +8,8 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli/httpmaster"
 	"github.com/mesos/mesos-go/api/v1/lib/master/calls"
 	"log"
-	"mesos-monitor/commands"
-	"mesos-monitor/config"
+	"mlm/commands"
+	"mlm/config"
 	"os"
 	"strings"
 )
@@ -70,7 +70,13 @@ func start(input *UserInput) {
 	}
 
 	if len(tasks) > 0 {
-		err = askForTasks(input, tasks)
+		taskNames := make([]string, len(tasks))
+		i := 0
+		for name := range tasks {
+			taskNames[i] = name
+			i++
+		}
+		err = askForTasks(input, taskNames)
 	}
 
 	logStream = make(chan string)

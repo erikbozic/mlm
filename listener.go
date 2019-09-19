@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	mesos "github.com/mesos/mesos-go/api/v1/lib"
 	"github.com/mesos/mesos-go/api/v1/lib/agent"
@@ -15,6 +16,10 @@ import (
 	"time"
 )
 
+const (
+	maxLogSize = 2000
+)
+
 // Listener streams the content of a file
 type Listener struct {
 	agentSender calls.Sender
@@ -23,9 +28,9 @@ type Listener struct {
 	fileName    string
 }
 
-func NewListener(fileName string, task mesos.Task, agentInfo mesos.AgentInfo) *Listener {
+func NewListener(fileName string, task mesos.Task, agentInfo mesos.AgentInfo) (*Listener, error) {
 	if task.AgentID.Value != agentInfo.ID.Value {
-		panic("tasks agent id doesn't match provided agent info") // err? constructor should be safe though... MustNewListener ?
+		return nil, errors.New("tasks agent id doesn't match provided agent info")
 	}
 
 	agentUrl := fmt.Sprintf("http://%s/api/v1", net.JoinHostPort(agentInfo.GetHostname(), strconv.Itoa(int(agentInfo.GetPort()))))
@@ -35,7 +40,7 @@ func NewListener(fileName string, task mesos.Task, agentInfo mesos.AgentInfo) *L
 		task:        task,
 		fileName:    fileName,
 		agent:       agentInfo,
-	}
+	}, nil
 }
 
 // Listen starts listening to the specified file and streams out the content
@@ -82,7 +87,7 @@ func (l *Listener) Listen(output chan string, commandStream chan string) {
 	timer := time.After(time.Duration(1000) * time.Millisecond)
 	stopReqested := false
 	// TODO configurable log identifiers
-	logIdentifier := fmt.Sprintf("%s:%d", l.agent.Hostname, l.task.GetDiscovery().GetPorts().Ports[0].Number)  //  l.task.GetTaskID().Value
+	logIdentifier := fmt.Sprintf("%s:%d", l.agent.Hostname, l.task.GetDiscovery().GetPorts().Ports[0].Number) //  l.task.GetTaskID().Value
 
 	// listen loop
 	for {
@@ -108,16 +113,14 @@ func (l *Listener) Listen(output chan string, commandStream chan string) {
 
 		// initial call to get size
 		if initial {
-			if r.GetSize() > 2000 {
-				offset = r.GetSize() - 2000
+			if r.GetSize() > maxLogSize {
+				offset = r.GetSize() - maxLogSize
 			}
 			initial = false
 			continue
 		} else {
 			offset = r.GetSize()
 		}
-
-
 
 		data := r.GetData()
 		if len(data) != 0 {
@@ -132,15 +135,11 @@ func (l *Listener) Listen(output chan string, commandStream chan string) {
 		}
 
 		select {
-			case  <- timer:
+			case <-timer:
 				timer = time.After(time.Duration(1000) * time.Millisecond)
 				continue
-			case command, ok := <- commandStream:
+			case _, ok := <-commandStream:
 				if !ok {
-					stopReqested = true
-					break
-				}
-				if command == ":b" {
 					stopReqested = true
 					break
 				}
@@ -159,7 +158,6 @@ func (l *Listener) getContainers() (containers []agent.Response_GetContainers_Co
 	}
 
 	var r agent.Response
-
 	err = resp.Decode(&r)
 	if err != nil {
 		return containers, err

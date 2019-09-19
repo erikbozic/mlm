@@ -12,9 +12,9 @@ import (
 )
 
 var (
-	masterSender calls.Sender
-	input		 *UserInput
-	logStream    chan string
+	masterSender  calls.Sender
+	input         *UserInput
+	logStream     chan string
 	commandStream chan string
 )
 
@@ -59,7 +59,7 @@ func start(input *UserInput) {
 	}
 
 	logStream = make(chan string)
-	commandStream 	= make(chan string) // TODO make command types
+	commandStream = make(chan string) // TODO make command types
 
 	for name, task := range tasks {
 		isSelected := false
@@ -82,7 +82,7 @@ func start(input *UserInput) {
 					Agent: agentInfo,
 				}
 				params = append(params, param)
-			}
+			} // TODO didn't find the agent for this task
 		}
 		monitor := NewMonitor(params)
 		go monitor.Start(logStream, commandStream)
@@ -98,15 +98,14 @@ func handleInput() {
 			close(commandStream) // will stop all listeners
 			close(logStream)     // will stop printLogs func
 			start(input)         // wil show the task selection survey again
-		} else 	if text == ":q\n" { // quit
+		} else if text == ":q\n" { // quit
 			close(commandStream) // will stop all listeners
-			close(logStream) // will stop printLogs func
+			close(logStream)     // will stop printLogs func
 			log.Println("bye!")
 			os.Exit(0)
 		}
 	}
 }
-
 
 func printLogs() {
 	for text := range logStream {

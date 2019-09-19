@@ -2,6 +2,7 @@ package main
 
 import (
 	mesos "github.com/mesos/mesos-go/api/v1/lib"
+	"log"
 )
 
 // Monitors tasks
@@ -26,11 +27,22 @@ func NewMonitor(parameters []MonitorParameter) *Monitor {
 func (m *Monitor) Start(output chan string, commandStream chan string) {
 	for _, p := range m.parameters {
 		// TODO filename could be configurable
-		stdOutListener := NewListener("stdout", p.Task, p.Agent)
-		stdErrListener := NewListener("stderr", p.Task, p.Agent)
+
+		stdOutListener, err := NewListener("stdout", p.Task, p.Agent)
+		if err != nil {
+			log.Println("error creating listener: ", err.Error())
+			continue
+		}
+
+		stdErrListener, err := NewListener("stderr", p.Task, p.Agent)
+		if err != nil {
+			log.Println("error creating listener: ", err.Error())
+			continue
+		}
+
 		// TODO what about: http://mesos.apache.org/documentation/latest/operator-http-api/#attach_container_output
 		go stdOutListener.Listen(output, commandStream)
 		go stdErrListener.Listen(output, commandStream)
-		// TODO handle errors and cancellation
+
 	}
 }

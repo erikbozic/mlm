@@ -4,6 +4,7 @@ import (
 	"fmt"
 	mesos "github.com/mesos/mesos-go/api/v1/lib"
 	"log"
+	"mesos-monitor/commands"
 )
 
 // Monitors tasks
@@ -25,8 +26,8 @@ func NewMonitor(parameters []MonitorParameter) *Monitor {
 }
 
 // Start sets up listeners for all specified tasks
-func (m *Monitor) Start(output chan string, commandStream chan Command, done chan struct{}) {
-	commandChannels := make([]chan Command, 0)
+func (m *Monitor) Start(output chan string, commandStream chan commands.Command, done chan struct{}) {
+	commandChannels := make([]chan commands.Command, 0)
 	for _, p := range m.parameters {
 		// TODO filename could be configurable
 
@@ -42,8 +43,8 @@ func (m *Monitor) Start(output chan string, commandStream chan Command, done cha
 			continue
 		}
 
-		c1 := make(chan Command)
-		c2 := make(chan Command)
+		c1 := make(chan commands.Command)
+		c2 := make(chan commands.Command)
 		commandChannels = append(commandChannels, c1)
 		commandChannels = append(commandChannels, c2)
 

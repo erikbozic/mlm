@@ -10,6 +10,7 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli/httpagent"
 	"log"
+	"mesos-monitor/commands"
 	"net"
 	"strconv"
 	"strings"
@@ -47,7 +48,7 @@ func NewListener(fileName string, task mesos.Task, agentInfo mesos.AgentInfo) (*
 }
 
 // Listen starts listening to the specified file and streams out the content
-func (l *Listener) Listen(output chan string, commandStream chan Command, done chan struct{}) {
+func (l *Listener) Listen(output chan string, commandStream chan commands.Command, done chan struct{}) {
 	// Get container info
 	containers, err := l.getContainers() // r.GetGetContainers().getContainers()
 	if err != nil {
@@ -160,11 +161,11 @@ func (l *Listener) Listen(output chan string, commandStream chan Command, done c
 	}
 }
 
-func (l *Listener) handleCommand(cmd Command) {
+func (l *Listener) handleCommand(cmd commands.Command) {
 	// TODO type switch better? and then we can get typed parameters?
 	if cmd.Name() == "test" {
 		log.Printf("%s command in listener %s!\n", cmd.Name(), l.logIdentifier)
-	} else if cmd.Name() == FilterCommandName {
+	} else if cmd.Name() == commands.FilterCommandName {
 		l.filterString =  cmd.Parameters()[0]
 	}
 }

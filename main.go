@@ -8,6 +8,7 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli/httpmaster"
 	"github.com/mesos/mesos-go/api/v1/lib/master/calls"
 	"log"
+	"mesos-monitor/commands"
 	"mesos-monitor/config"
 	"os"
 	"strings"
@@ -18,7 +19,7 @@ var (
 	input        *UserInput
 	logStream    chan string
 	done         chan struct{}
-	commandStream chan Command
+	commandStream chan commands.Command
 )
 
 func main() {
@@ -74,7 +75,7 @@ func start(input *UserInput) {
 
 	logStream = make(chan string)
 	done = make(chan struct{})
-	commandStream = make(chan Command)
+	commandStream = make(chan commands.Command)
 
 	params := make([]MonitorParameter, 0)
 	// build monitor params
@@ -120,10 +121,10 @@ func handleInput() {
 			log.Println("bye!")
 			os.Exit(0)
 		} else if text == ":a\n" { // test
-			commandStream <- NewTestCommand("test", nil)
+			commandStream <- commands.NewTestCommand("test", nil)
 		} else if strings.HasPrefix(text, ":f") { // filter
 			filterText := strings.TrimSpace(strings.TrimPrefix(text, ":f"))
-			commandStream <- NewFilterCommand(filterText)
+			commandStream <- commands.NewFilterCommand(filterText)
 			log.Printf("filter set to: \"%s\" on all listeners", filterText )
 		}
 	}

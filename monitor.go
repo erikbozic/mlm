@@ -11,7 +11,7 @@ type Monitor struct {
 
 type MonitorParameter struct {
 	// Task which to monitor
-	Task  mesos.Task
+	Task mesos.Task
 	// Agent on which the task is running
 	Agent mesos.AgentInfo
 }
@@ -23,7 +23,7 @@ func NewMonitor(parameters []MonitorParameter) *Monitor {
 }
 
 // Start sets up listeners for all specified tasks
-func (m *Monitor)Start(output chan string) {
+func (m *Monitor) Start(output chan string) {
 	for _, p := range m.parameters {
 		// TODO filename could be configurable
 		stdOutListener := NewListener("stdout", p.Task, p.Agent)

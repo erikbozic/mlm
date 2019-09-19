@@ -2,14 +2,13 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	mesos "github.com/mesos/mesos-go/api/v1/lib"
 	"github.com/mesos/mesos-go/api/v1/lib/agent"
 	"github.com/mesos/mesos-go/api/v1/lib/agent/calls"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli/httpagent"
-	"github.com/mesos/mesos-go/api/v1/lib/master"
+	"log"
 	"net"
 	"strconv"
 	"strings"
@@ -40,19 +39,15 @@ func NewListener(fileName string, task mesos.Task, agentInfo mesos.AgentInfo) *L
 }
 
 // Listen starts listening to the specified file and streams out the content
-func (l *Listener) Listen(output chan string) error {
+func (l *Listener) Listen(output chan string) {
 	// Get container info
-	resp, err := l.agentSender.Send(context.TODO(), calls.NonStreaming(calls.GetContainers()))
+	containers, err := l.getContainers() // r.GetGetContainers().getContainers()
 	if err != nil {
-		return err
-	}
-	var r agent.Response
-	err = resp.Decode(&r)
-	if err != nil {
-		return err
+		log.Println("error while getting containers: ", err.Error())
+		return
 	}
 
-	containers := r.GetGetContainers().GetContainers()
+	// Match the correct container
 	containerId := ""
 	for _, c := range containers {
 		if c.GetExecutorID().Value == l.task.GetTaskID().Value { // TODO assuming this is ok. Doublecheck
@@ -61,18 +56,14 @@ func (l *Listener) Listen(output chan string) error {
 		}
 	}
 
-	// Get flags
-	resp, err = l.agentSender.Send(context.TODO(), calls.NonStreaming(calls.GetFlags()))
-	if err != nil {
-		return err
-	}
-	err = resp.Decode(&r)
-	if err != nil {
-		return err
+	if containerId == "" {
+		log.Println("container not found")
+		return
 	}
 
+	// Get flags
+	flags, err := l.getFlags()
 	agentWorkDir := ""
-	flags := r.GetGetFlags().GetFlags()
 	for _, f := range flags {
 		if f.GetName() == "work_dir" {
 			agentWorkDir = f.GetValue()
@@ -83,14 +74,12 @@ func (l *Listener) Listen(output chan string) error {
 	frameworkId := l.task.GetFrameworkID().Value
 	taskId := l.task.GetTaskID().Value
 
-	if containerId == "" {
-		return errors.New("container not found")
-	}
-
 	// {workdir}/slaves/{agentId}/frameworks/{frameworkId}/executors/{taskId}/runs/{containerId}/stdout
 	fullPath := fmt.Sprintf("%s/slaves/%s/frameworks/%s/executors/%s/runs/%s/%s", agentWorkDir, agentId, frameworkId, taskId, containerId, l.fileName)
 	offset := uint64(0)
 	initial := true
+	var resp mesos.Response
+	// listen loop
 	for {
 		if initial {
 			resp, err = l.agentSender.Send(context.TODO(), calls.NonStreaming(calls.ReadFileWithLength(fullPath, offset, 0))) // only to get the current size
@@ -99,17 +88,18 @@ func (l *Listener) Listen(output chan string) error {
 		}
 
 		if err != nil {
-			return err
+			log.Println("error while reading file", err.Error())
+			return
 		}
 
-		var e master.Response
-
-		err = resp.Decode(&e)
+		var agentResponse agent.Response
+		err = resp.Decode(&agentResponse)
 		if err != nil {
-			return err
+			log.Println("error while decoding read file response", err.Error())
+			return
 		}
 
-		r := e.GetReadFile()
+		r := agentResponse.GetReadFile()
 
 		// initial call to get size
 		if initial {
@@ -123,18 +113,47 @@ func (l *Listener) Listen(output chan string) error {
 		}
 
 		data := r.GetData()
-
 		if len(data) != 0 {
 			lines := strings.Split(string(data), "\n")
 			for _, line := range lines {
 				if len(strings.TrimSpace(line)) > 0 {
 					// TODO use templates
 					// TODO implement grep like filter. Use a channel to push the filter string to all listeners
-					output <- fmt.Sprintf("[%s:%d]: %s",l.agent.Hostname, l.task.GetDiscovery().GetPorts().Ports[0].Number, line) //  l.task.GetTaskID().Value
+					output <- fmt.Sprintf("[%s:%d]: %s", l.agent.Hostname, l.task.GetDiscovery().GetPorts().Ports[0].Number, line) //  l.task.GetTaskID().Value
 				}
 			}
 		}
 		// TODO sleep should be configurable
 		time.Sleep(time.Duration(1000) * time.Millisecond)
 	}
+}
+
+func (l *Listener) getContainers() (containers []agent.Response_GetContainers_Container, err error) {
+	resp, err := l.agentSender.Send(context.TODO(), calls.NonStreaming(calls.GetContainers()))
+	if err != nil {
+		return containers, err
+	}
+
+	var r agent.Response
+
+	err = resp.Decode(&r)
+	if err != nil {
+		return containers, err
+	}
+
+	return r.GetGetContainers().GetContainers(), nil
+}
+
+func (l *Listener) getFlags() (flags []mesos.Flag, err error) {
+	resp, err := l.agentSender.Send(context.TODO(), calls.NonStreaming(calls.GetFlags()))
+	if err != nil {
+		return flags, err
+	}
+	var r agent.Response
+	err = resp.Decode(&r)
+	if err != nil {
+		return flags, err
+	}
+
+	return r.GetGetFlags().GetFlags(), nil
 }

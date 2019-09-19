@@ -81,4 +81,3 @@ func printLogs(logs chan string) {
 		fmt.Println(text)
 	}
 }
-

@@ -33,7 +33,7 @@ func askForMesosMaster(input *UserInput) error {
 func askForTasks(input *UserInput, tasks map[string][]mesos.Task) error {
 	taskNames := make([]string, len(tasks))
 	i := 0
-	for name, _ := range tasks {
+	for name := range tasks {
 		taskNames[i] = name
 		i++
 	}

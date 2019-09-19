@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	mesos "github.com/mesos/mesos-go/api/v1/lib"
 	"log"
 )
@@ -24,7 +25,8 @@ func NewMonitor(parameters []MonitorParameter) *Monitor {
 }
 
 // Start sets up listeners for all specified tasks
-func (m *Monitor) Start(output chan string, done chan struct{}) {
+func (m *Monitor) Start(output, commandStream chan string, done chan struct{}) {
+	commandChannels := make([]chan string, 0)
 	for _, p := range m.parameters {
 		// TODO filename could be configurable
 
@@ -40,9 +42,25 @@ func (m *Monitor) Start(output chan string, done chan struct{}) {
 			continue
 		}
 
-		// TODO what about: http://mesos.apache.org/documentation/latest/operator-http-api/#attach_container_output
-		go stdOutListener.Listen(output, done)
-		go stdErrListener.Listen(output, done)
+		c1 := make(chan string)
+		c2 := make(chan string)
+		commandChannels = append(commandChannels, c1)
+		commandChannels = append(commandChannels, c2)
 
+		go stdOutListener.Listen(output, c1, done)
+		go stdErrListener.Listen(output, c2, done)
+	}
+
+	for {
+		select {
+		case command, ok := <- commandStream:
+			if !ok {
+				fmt.Printf("closed command channel... ?")
+				return
+			}
+			for _, c := range commandChannels {
+				c <- command
+			}
+		}
 	}
 }

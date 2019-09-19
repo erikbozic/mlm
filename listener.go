@@ -44,7 +44,7 @@ func NewListener(fileName string, task mesos.Task, agentInfo mesos.AgentInfo) (*
 }
 
 // Listen starts listening to the specified file and streams out the content
-func (l *Listener) Listen(output chan string, done chan struct{}) {
+func (l *Listener) Listen(output chan string, commandStream chan string, done chan struct{}) {
 	// Get container info
 	containers, err := l.getContainers() // r.GetGetContainers().getContainers()
 	if err != nil {
@@ -91,6 +91,7 @@ func (l *Listener) Listen(output chan string, done chan struct{}) {
 
 	// listen loop
 	for {
+		// TODO what about: http://mesos.apache.org/documentation/latest/operator-http-api/#attach_container_output
 		if initial {
 			resp, err = l.agentSender.Send(context.TODO(), calls.NonStreaming(calls.ReadFileWithLength(fullPath, offset, 0))) // only to get the current size
 		} else {
@@ -142,6 +143,10 @@ func (l *Listener) Listen(output chan string, done chan struct{}) {
 				if !ok {
 					stopReqested = true
 					break
+				}
+			case cmd := <- commandStream:
+				if cmd == ":a" {
+					log.Printf(":a in listener %s!\n", logIdentifier)
 				}
 		}
 		if stopReqested {

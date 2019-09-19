@@ -16,6 +16,7 @@ var (
 	input        *UserInput
 	logStream    chan string
 	done         chan struct{}
+	commandStream chan string
 )
 
 func main() {
@@ -60,7 +61,10 @@ func start(input *UserInput) {
 
 	logStream = make(chan string)
 	done = make(chan struct{})
+	commandStream = make(chan string)
 
+	params := make([]MonitorParameter, 0)
+	// build monitor params
 	for name, task := range tasks {
 		isSelected := false
 		for _, selectedName := range input.SelectedTaskNames {
@@ -74,7 +78,6 @@ func start(input *UserInput) {
 			continue
 		}
 
-		params := make([]MonitorParameter, 0)
 		for _, taskInstance := range task {
 			if agentInfo, ok := agents[taskInstance.GetAgentID().Value]; ok {
 				param := MonitorParameter{
@@ -84,9 +87,9 @@ func start(input *UserInput) {
 				params = append(params, param)
 			} // TODO didn't find the agent for this task
 		}
-		monitor := NewMonitor(params)
-		go monitor.Start(logStream, done)
 	}
+	monitor := NewMonitor(params)
+	go monitor.Start(logStream, commandStream, done)
 	go printLogs()
 }
 
@@ -103,9 +106,10 @@ func handleInput() {
 			close(logStream) // will stop printLogs func
 			log.Println("bye!")
 			os.Exit(0)
-		} else if text == ":a\n" { // quit
-			log.Println("bye!")
-			os.Exit(0)
+		} else if text == ":a\n" { // test
+			commandStream <- ":a"
+			log.Println(":a handled!")
+
 		}
 	}
 }

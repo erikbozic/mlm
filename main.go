@@ -8,6 +8,7 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli/httpmaster"
 	"github.com/mesos/mesos-go/api/v1/lib/master/calls"
 	"log"
+	"mesos-monitor/config"
 	"os"
 	"strings"
 )
@@ -22,9 +23,16 @@ var (
 
 func main() {
 	var mesosMasterUrl string
-	flag.StringVar(&mesosMasterUrl, "master", "", "http url of mesos master (e.g.: http://localhost:5050)")
 	flag.StringVar(&mesosMasterUrl, "m", "", "http url of mesos master (e.g.: http://localhost:5050)")
 	flag.Parse()
+
+	cfg := config.ReadConfig()
+	if mesosMasterUrl == "" {
+		mesosMasterUrl = cfg.MesosMasterUrl
+	} else {
+		cfg.MesosMasterUrl = mesosMasterUrl
+		cfg.SaveConfig()
+	}
 
 	input = &UserInput{}
 	if mesosMasterUrl == "" {
@@ -34,6 +42,10 @@ func main() {
 			return
 		}
 		mesosMasterUrl = input.MesosMasterUrl
+		cfg.MesosMasterUrl = mesosMasterUrl
+		cfg.SaveConfig()
+	} else {
+		fmt.Println("using mesos master:", mesosMasterUrl)
 	}
 
 	uri := fmt.Sprintf("%s/api/v1", mesosMasterUrl)

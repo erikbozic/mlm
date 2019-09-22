@@ -106,6 +106,7 @@ func start(input *UserInput) {
 				param := MonitorParameter{
 					Task:  taskInstance,
 					Agent: agentInfo,
+					Files: []string{"stdout", "stderr"},
 				}
 				params = append(params, param)
 			} else {

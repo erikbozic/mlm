@@ -3,6 +3,12 @@
 **Work in progress!**    
 Command line tool for monitoring mesos task logs
 
+## Build
+
+Build with `go build`. This will produce the mlm executable.
+
+We're building with go 1.12 and 1.13.
+
 ## Usage
 
 Run this binary with `-m` flag and pass in the http url for mesos master.

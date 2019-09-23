@@ -57,7 +57,6 @@ func main() {
 }
 
 func start(input *UserInput) {
-	input.SelectedTaskNames = nil
 	fmt.Println("discovery...")
 	tasks, err := getTasks()
 	if err != nil {
@@ -86,7 +85,7 @@ func start(input *UserInput) {
 	logStream = make(chan string)
 	done = make(chan struct{})
 
-	params := make([]MonitorParameter, 0)
+	params := make([]*MonitorParameter, 0)
 	// build monitor params
 	for name, task := range tasks {
 		isSelected := false
@@ -103,7 +102,7 @@ func start(input *UserInput) {
 
 		for _, taskInstance := range task {
 			if agentInfo, ok := agents[taskInstance.GetAgentID().Value]; ok {
-				param := MonitorParameter{
+				param := &MonitorParameter{
 					Task:  taskInstance,
 					Agent: agentInfo,
 					Files: []string{"stdout", "stderr"},
@@ -126,10 +125,11 @@ func handleInput() {
 		if text == ":b\n" { // back (to task selection)
 			close(done)      // will stop all listeners
 			close(logStream) // will stop printLogs func
+			input.SelectedTaskNames = nil // reset selected task names
 			start(input)     // wil show the task selection survey again
 		} else if text == ":q\n" { // quit
-			close(done)      // will stop all listeners
-			close(logStream) // will stop printLogs func
+			close(done)
+			close(logStream)
 			log.Println("bye!")
 			os.Exit(0)
 		} else if strings.HasPrefix(text, ":f") { // filter

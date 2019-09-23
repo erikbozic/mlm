@@ -27,4 +27,5 @@ provide it next time you use this binary.
  - `:b` issue this command to stop listening and return to the task selection  
  - `:q` issue this command to stop listening and quit the program  
  - `:f {filterString}` issue this command to start filtering log messages on all listeners using the provided filter string
-  
+ - `:p` issue this command to pause all listeners
+ - `:u` issue  this command to unpause all listeners

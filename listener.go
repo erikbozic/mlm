@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	maxLogSize = 2000
+	maxLogSize   = 2000
 	pollInterval = 500
 )
 
@@ -30,6 +30,7 @@ type Listener struct {
 	fileName      string
 	logIdentifier string
 	filterString  string
+	timer         <-chan time.Time
 }
 
 func NewListener(fileName string, task mesos.Task, agentInfo mesos.AgentInfo) (*Listener, error) {
@@ -89,7 +90,7 @@ func (l *Listener) Listen(output chan<- string, commandStream <-chan commands.Co
 	offset := uint64(0)
 	initial := true
 	var resp mesos.Response
-	timer := time.After(time.Duration(pollInterval) * time.Millisecond)
+	l.timer = time.After(time.Duration(pollInterval) * time.Millisecond)
 	stopRequested := false
 	// TODO configurable log identifiers
 	l.logIdentifier = fmt.Sprintf("%s:%d", l.agent.Hostname, l.task.GetDiscovery().GetPorts().Ports[0].Number)
@@ -144,8 +145,8 @@ func (l *Listener) Listen(output chan<- string, commandStream <-chan commands.Co
 		}
 
 		select {
-		case <-timer:
-			timer = time.After(time.Duration(pollInterval) * time.Millisecond)
+		case <-l.timer:
+			l.timer = time.After(time.Duration(pollInterval) * time.Millisecond)
 			continue
 		case _, ok := <-done:
 			if !ok {
@@ -168,6 +169,10 @@ func (l *Listener) handleCommand(cmd commands.Command) {
 		log.Printf("%s command in listener %s!\n", cmd.Name(), l.logIdentifier)
 	} else if cmd.Name() == commands.FilterCommandName {
 		l.filterString = cmd.Parameters()[0]
+	} else if cmd.Name() == commands.PauseCommandName {
+		l.timer = nil
+	} else if cmd.Name() == commands.UnpauseCommandName {
+		l.timer = time.After(time.Duration(pollInterval) * time.Millisecond)
 	}
 }
 

@@ -132,12 +132,16 @@ func handleInput() {
 			close(logStream) // will stop printLogs func
 			log.Println("bye!")
 			os.Exit(0)
-		} else if text == ":a\n" { // test
-			commandStream <- commands.NewTestCommand("test", nil)
 		} else if strings.HasPrefix(text, ":f") { // filter
 			filterText := strings.TrimSpace(strings.TrimPrefix(text, ":f"))
 			commandStream <- commands.NewFilterCommand(filterText)
 			log.Printf("filter set to: \"%s\" on all listeners", filterText)
+		} else if text == ":p\n" { // pause
+			commandStream <- commands.NewPauseCommand()
+			log.Printf("paused all listeners")
+		} else if text == ":u\n" { // unpause
+			commandStream <- commands.NewUnpauseCommand()
+			log.Printf("unpaused all listeners")
 		}
 	}
 }

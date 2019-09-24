@@ -164,9 +164,7 @@ func (l *Listener) Listen(output chan<- string, commandStream <-chan commands.Co
 
 func (l *Listener) handleCommand(cmd commands.Command) {
 	// TODO type switch better? and then we can get typed parameters?
-	if cmd.Name() == "test" {
-		log.Printf("%s command in listener %s!\n", cmd.Name(), l.logIdentifier)
-	} else if cmd.Name() == commands.FilterCommandName {
+	if cmd.Name() == commands.FilterCommandName {
 		l.filterString = cmd.Parameters()[0]
 	} else if cmd.Name() == commands.PauseCommandName {
 		l.timer = nil

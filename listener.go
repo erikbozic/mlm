@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	maxLogSize = 2000
+	maxLogSize   = 2000
 	pollInterval = 500
 )
 
@@ -30,9 +30,11 @@ type Listener struct {
 	fileName      string
 	logIdentifier string
 	filterString  string
+	timer         <-chan time.Time
+	color         string
 }
 
-func NewListener(fileName string, task mesos.Task, agentInfo mesos.AgentInfo) (*Listener, error) {
+func NewListener(fileName string, task mesos.Task, agentInfo mesos.AgentInfo, color string) (*Listener, error) {
 	if task.AgentID.Value != agentInfo.ID.Value {
 		return nil, errors.New("tasks agent id doesn't match provided agent info")
 	}
@@ -45,6 +47,7 @@ func NewListener(fileName string, task mesos.Task, agentInfo mesos.AgentInfo) (*
 		task:        task,
 		fileName:    fileName,
 		agent:       agentInfo,
+		color:       color,
 	}, nil
 }
 
@@ -89,13 +92,11 @@ func (l *Listener) Listen(output chan<- string, commandStream <-chan commands.Co
 	offset := uint64(0)
 	initial := true
 	var resp mesos.Response
-	timer := time.After(time.Duration(pollInterval) * time.Millisecond)
-	stopRequested := false
+	l.timer = time.NewTimer(0).C // right away
 	// TODO configurable log identifiers
 	l.logIdentifier = fmt.Sprintf("%s:%d", l.agent.Hostname, l.task.GetDiscovery().GetPorts().Ports[0].Number)
 
-	// listen loop
-	for {
+	poll := func() {
 		// TODO what about: http://mesos.apache.org/documentation/latest/operator-http-api/#attach_container_output
 		if initial {
 			resp, err = l.agentSender.Send(context.TODO(), calls.NonStreaming(calls.ReadFileWithLength(fullPath, offset, 0))) // only to get the current size
@@ -123,7 +124,7 @@ func (l *Listener) Listen(output chan<- string, commandStream <-chan commands.Co
 				offset = r.GetSize() - maxLogSize
 			}
 			initial = false
-			continue
+			return
 		} else {
 			offset = r.GetSize()
 		}
@@ -133,41 +134,42 @@ func (l *Listener) Listen(output chan<- string, commandStream <-chan commands.Co
 			lines := strings.Split(string(data), "\n")
 			for _, line := range lines {
 				if len(strings.TrimSpace(line)) > 0 {
-
-					if l.filterString != "" && !strings.Contains(line, l.filterString) {
+					// TODO use templates
+					logMessage := fmt.Sprintf("%s[%s]%s: %s", l.color, l.logIdentifier, "\u001b[0m", line)
+					if l.filterString != "" && !strings.Contains(logMessage, l.filterString) {
 						continue
 					}
-					// TODO use templates
-					output <- fmt.Sprintf("[%s]: %s", l.logIdentifier, line)
+					output <- logMessage
 				}
 			}
 		}
+	}
 
+	// listen loop
+	for {
 		select {
-		case <-timer:
-			timer = time.After(time.Duration(pollInterval) * time.Millisecond)
-			continue
+		case <-l.timer:
+			l.timer = time.After(time.Duration(pollInterval) * time.Millisecond)
+			poll()
 		case _, ok := <-done:
 			if !ok {
-				stopRequested = true
-				break
+				log.Println("stop listening to ", l.logIdentifier)
+				return
 			}
 		case cmd := <-commandStream:
 			l.handleCommand(cmd)
-		}
-		if stopRequested {
-			log.Println("stop listening to ", l.logIdentifier)
-			return
 		}
 	}
 }
 
 func (l *Listener) handleCommand(cmd commands.Command) {
 	// TODO type switch better? and then we can get typed parameters?
-	if cmd.Name() == "test" {
-		log.Printf("%s command in listener %s!\n", cmd.Name(), l.logIdentifier)
-	} else if cmd.Name() == commands.FilterCommandName {
+	if cmd.Name() == commands.FilterCommandName {
 		l.filterString = cmd.Parameters()[0]
+	} else if cmd.Name() == commands.PauseCommandName {
+		l.timer = nil
+	} else if cmd.Name() == commands.UnpauseCommandName {
+		l.timer = time.After(time.Duration(pollInterval) * time.Millisecond)
 	}
 }
 

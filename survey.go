@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/AlecAivazis/survey/v2"
+	"sort"
 )
 
 type UserInput struct {
@@ -30,6 +31,7 @@ func askForMesosMaster(input *UserInput) error {
 }
 
 func askForTasks(input *UserInput, taskNames []string) error {
+	sort.Strings(taskNames)
 	tasksQ := []*survey.Question{
 		{
 			Name: "SelectedTaskNames",

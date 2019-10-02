@@ -43,7 +43,7 @@ func NewMonitor(parameters []*MonitorParameter) *Monitor {
 
 func SetLogColor (params []*MonitorParameter) {
 	for i, p := range params {
-		p.color = Colors[i%len(params)]
+		p.color = Colors[i%len(Colors)]
 	}
 }
 

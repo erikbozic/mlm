@@ -169,7 +169,7 @@ func (l *Listener) handleCommand(cmd commands.Command) {
 	} else if cmd.Name() == commands.PauseCommandName {
 		l.timer = nil
 	} else if cmd.Name() == commands.UnpauseCommandName {
-		l.timer = time.After(time.Duration(pollInterval) * time.Millisecond)
+		l.timer = time.NewTimer(0).C // right away
 	}
 }
 

@@ -20,7 +20,7 @@ var (
 		"\u001b[35m", // magenta
 		"\u001b[36m", // cyan
 		"\u001b[37m", // white
-		"\u001b[0m", // reset
+		"\u001b[0m",  // reset
 	}
 )
 
@@ -41,7 +41,7 @@ func NewMonitor(parameters []*MonitorParameter) *Monitor {
 	}
 }
 
-func SetLogColor (params []*MonitorParameter) {
+func SetLogColor(params []*MonitorParameter) {
 	for i, p := range params {
 		p.color = Colors[i%len(Colors)]
 	}

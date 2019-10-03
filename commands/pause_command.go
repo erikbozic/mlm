@@ -19,4 +19,3 @@ func (t *PauseCommand) Name() string {
 func (t *PauseCommand) Parameters() []string {
 	return nil
 }
-

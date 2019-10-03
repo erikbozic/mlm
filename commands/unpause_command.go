@@ -19,4 +19,3 @@ func (t *UnpauseCommand) Name() string {
 func (t *UnpauseCommand) Parameters() []string {
 	return nil
 }
-

@@ -123,10 +123,10 @@ func handleInput() {
 	for {
 		text, _ := reader.ReadString('\n')
 		if text == ":b\n" { // back (to task selection)
-			close(done)      // will stop all listeners
-			close(logStream) // will stop printLogs func
+			close(done)                   // will stop all listeners
+			close(logStream)              // will stop printLogs func
 			input.SelectedTaskNames = nil // reset selected task names
-			start(input)     // wil show the task selection survey again
+			start(input)                  // wil show the task selection survey again
 		} else if text == ":q\n" { // quit
 			close(done)
 			close(logStream)

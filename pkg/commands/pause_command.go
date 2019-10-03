@@ -8,8 +8,7 @@ type PauseCommand struct {
 }
 
 func NewPauseCommand() *PauseCommand {
-	return &PauseCommand{
-	}
+	return &PauseCommand{}
 }
 
 func (t *PauseCommand) Name() string {
@@ -19,4 +18,3 @@ func (t *PauseCommand) Name() string {
 func (t *PauseCommand) Parameters() []string {
 	return nil
 }
-

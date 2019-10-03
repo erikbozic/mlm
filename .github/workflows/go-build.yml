@@ -17,4 +17,4 @@ jobs:
       uses: actions/checkout@v1
 
     - name: Build
-      run: go build -mod=vendor -v
+      run: go build -mod=vendor -o mlm mlm/cmd/monitor

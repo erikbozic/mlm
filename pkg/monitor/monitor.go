@@ -1,14 +1,14 @@
-package main
+package monitor
 
 import (
 	mesos "github.com/mesos/mesos-go/api/v1/lib"
 	"log"
-	"mlm/commands"
+	"mlm/pkg/commands"
 )
 
 // Monitors tasks
 type Monitor struct {
-	parameters []*MonitorParameter
+	parameters []*Parameter
 }
 
 var (
@@ -20,11 +20,11 @@ var (
 		"\u001b[35m", // magenta
 		"\u001b[36m", // cyan
 		"\u001b[37m", // white
-		"\u001b[0m", // reset
+		"\u001b[0m",  // reset
 	}
 )
 
-type MonitorParameter struct {
+type Parameter struct {
 	// Task which to monitor
 	Task mesos.Task
 	// Agent on which the task is running
@@ -35,13 +35,13 @@ type MonitorParameter struct {
 	color string
 }
 
-func NewMonitor(parameters []*MonitorParameter) *Monitor {
+func NewMonitor(parameters []*Parameter) *Monitor {
 	return &Monitor{
 		parameters: parameters,
 	}
 }
 
-func SetLogColor (params []*MonitorParameter) {
+func SetLogColor(params []*Parameter) {
 	for i, p := range params {
 		p.color = Colors[i%len(Colors)]
 	}
@@ -63,20 +63,13 @@ func (m *Monitor) Start(output chan string, commandStream <-chan commands.Comman
 			go listener.Listen(output, cmdChannel, done)
 		}
 	}
-
-	for {
-		select {
-		case command, ok := <-commandStream:
-			if !ok {
-				log.Printf("closed command channel... ?")
-				for _, c := range commandChannels {
-					close(c)
-				}
-				return
-			}
-			for _, c := range commandChannels {
-				c <- command
-			}
+	// range through the commandStream until it closes and fan them out to listeners' command channels
+	for command := range commandStream {
+		for _, c := range commandChannels {
+			c <- command
 		}
+	}
+	for _, c := range commandChannels {
+		close(c)
 	}
 }

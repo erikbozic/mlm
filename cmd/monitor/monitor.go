@@ -8,8 +8,9 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli/httpmaster"
 	"github.com/mesos/mesos-go/api/v1/lib/master/calls"
 	"log"
-	"mlm/commands"
-	"mlm/config"
+	"mlm/internal/config"
+	"mlm/pkg/commands"
+	"mlm/pkg/monitor"
 	"os"
 	"strings"
 )
@@ -76,6 +77,9 @@ func start(input *UserInput) {
 			i++
 		}
 		err = askForTasks(input, taskNames)
+		if err != nil {
+			log.Fatal("error selecting tasks")
+		}
 	} else {
 		log.Println("didn't get any active tasks from master!\nbye!")
 		os.Exit(0)
@@ -85,7 +89,7 @@ func start(input *UserInput) {
 	logStream = make(chan string)
 	done = make(chan struct{})
 
-	params := make([]*MonitorParameter, 0)
+	params := make([]*monitor.Parameter, 0)
 	// build monitor params
 	for name, task := range tasks {
 		isSelected := false
@@ -102,7 +106,7 @@ func start(input *UserInput) {
 
 		for _, taskInstance := range task {
 			if agentInfo, ok := agents[taskInstance.GetAgentID().Value]; ok {
-				param := &MonitorParameter{
+				param := &monitor.Parameter{
 					Task:  taskInstance,
 					Agent: agentInfo,
 					Files: []string{"stdout", "stderr"},
@@ -113,8 +117,8 @@ func start(input *UserInput) {
 			}
 		}
 	}
-	monitor := NewMonitor(params)
-	go monitor.Start(logStream, commandStream, done)
+	mon := monitor.NewMonitor(params)
+	go mon.Start(logStream, commandStream, done)
 	go printLogs()
 }
 
@@ -123,10 +127,10 @@ func handleInput() {
 	for {
 		text, _ := reader.ReadString('\n')
 		if text == ":b\n" { // back (to task selection)
-			close(done)      // will stop all listeners
-			close(logStream) // will stop printLogs func
+			close(done)                   // will stop all listeners
+			close(logStream)              // will stop printLogs func
 			input.SelectedTaskNames = nil // reset selected task names
-			start(input)     // wil show the task selection survey again
+			start(input)                  // wil show the task selection survey again
 		} else if text == ":q\n" { // quit
 			close(done)
 			close(logStream)

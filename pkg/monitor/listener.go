@@ -1,4 +1,4 @@
-package main
+package monitor
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli/httpagent"
 	"log"
-	"mlm/commands"
+	"mlm/pkg/commands"
 	"net"
 	"strconv"
 	"strings"
@@ -125,10 +125,8 @@ func (l *Listener) Listen(output chan<- string, commandStream <-chan commands.Co
 			}
 			initial = false
 			return
-		} else {
-			offset = r.GetSize()
 		}
-
+		offset = r.GetSize()
 		data := r.GetData()
 		if len(data) != 0 {
 			lines := strings.Split(string(data), "\n")

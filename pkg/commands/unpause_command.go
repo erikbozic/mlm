@@ -8,8 +8,7 @@ type UnpauseCommand struct {
 }
 
 func NewUnpauseCommand() *UnpauseCommand {
-	return &UnpauseCommand{
-	}
+	return &UnpauseCommand{}
 }
 
 func (t *UnpauseCommand) Name() string {
@@ -19,4 +18,3 @@ func (t *UnpauseCommand) Name() string {
 func (t *UnpauseCommand) Parameters() []string {
 	return nil
 }
-

@@ -5,7 +5,7 @@ Command line tool for monitoring mesos task logs
 
 ## Build
 
-Build with `go build`. This will produce the mlm executable.
+Build with `go build -o mlm mlm/cmd/monitor`. This will produce the mlm executable.
 
 We're building with go 1.12 and 1.13.
 
@@ -29,3 +29,12 @@ provide it next time you use this binary.
  - `:f {filterString}` issue this command to start filtering log messages on all listeners using the provided filter string
  - `:p` issue this command to pause all listeners
  - `:u` issue  this command to unpause all listeners
+
+## Development
+To get started you can setup mesos on you machine easily with the docker image: [mesos/mesos-mini](https://hub.docker.com/r/mesos/mesos-mini/).  
+`docker run --rm --privileged -p 5050:5050 -p 5051:5051 -p 8080:8080 mesos/mesos-mini`
+
+Deploy an application through marathon and you're good to Go!
+
+ - CLI code lives in the `/cmd/monitor` directory
+ - library code lives in the `/pkg/monitor` directory

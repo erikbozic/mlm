@@ -36,7 +36,7 @@ func getTasks() (tasks map[string][]mesos.Task, err error) {
 
 func getAgents() (agents map[string]mesos.AgentInfo, err error) {
 	resp, err := masterSender.Send(context.TODO(), calls.NonStreaming(calls.GetAgents()))
-	agents = make(map[string]mesos.AgentInfo, 0)
+	agents = make(map[string]mesos.AgentInfo)
 	if err != nil {
 		return agents, err
 	}

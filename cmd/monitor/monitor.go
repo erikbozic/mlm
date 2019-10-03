@@ -8,8 +8,9 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli/httpmaster"
 	"github.com/mesos/mesos-go/api/v1/lib/master/calls"
 	"log"
-	"mlm/commands"
-	"mlm/config"
+	"mlm/internal/config"
+	"mlm/pkg/commands"
+	"mlm/pkg/monitor"
 	"os"
 	"strings"
 )
@@ -85,7 +86,7 @@ func start(input *UserInput) {
 	logStream = make(chan string)
 	done = make(chan struct{})
 
-	params := make([]*MonitorParameter, 0)
+	params := make([]*monitor.MonitorParameter, 0)
 	// build monitor params
 	for name, task := range tasks {
 		isSelected := false
@@ -102,7 +103,7 @@ func start(input *UserInput) {
 
 		for _, taskInstance := range task {
 			if agentInfo, ok := agents[taskInstance.GetAgentID().Value]; ok {
-				param := &MonitorParameter{
+				param := &monitor.MonitorParameter{
 					Task:  taskInstance,
 					Agent: agentInfo,
 					Files: []string{"stdout", "stderr"},
@@ -113,8 +114,8 @@ func start(input *UserInput) {
 			}
 		}
 	}
-	monitor := NewMonitor(params)
-	go monitor.Start(logStream, commandStream, done)
+	mon := monitor.NewMonitor(params)
+	go mon.Start(logStream, commandStream, done)
 	go printLogs()
 }
 

@@ -1,9 +1,9 @@
-package main
+package monitor
 
 import (
 	mesos "github.com/mesos/mesos-go/api/v1/lib"
 	"log"
-	"mlm/commands"
+	"mlm/pkg/commands"
 )
 
 // Monitors tasks

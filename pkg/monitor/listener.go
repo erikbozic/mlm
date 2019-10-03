@@ -1,4 +1,4 @@
-package main
+package monitor
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli/httpagent"
 	"log"
-	"mlm/commands"
+	"mlm/pkg/commands"
 	"net"
 	"strconv"
 	"strings"

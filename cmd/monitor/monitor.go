@@ -77,6 +77,9 @@ func start(input *UserInput) {
 			i++
 		}
 		err = askForTasks(input, taskNames)
+		if err != nil {
+			log.Fatal("error selecting tasks")
+		}
 	} else {
 		log.Println("didn't get any active tasks from master!\nbye!")
 		os.Exit(0)

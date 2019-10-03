@@ -63,20 +63,13 @@ func (m *Monitor) Start(output chan string, commandStream <-chan commands.Comman
 			go listener.Listen(output, cmdChannel, done)
 		}
 	}
-
-	for {
-		select {
-		case command, ok := <-commandStream:
-			if !ok {
-				log.Printf("closed command channel... ?")
-				for _, c := range commandChannels {
-					close(c)
-				}
-				return
-			}
-			for _, c := range commandChannels {
-				c <- command
-			}
+	// range through the commandStream until it closes and fan them out to listeners' command channels
+	for command := range commandStream {
+		for _, c := range commandChannels {
+			c <- command
 		}
+	}
+	for _, c := range commandChannels {
+		close(c)
 	}
 }

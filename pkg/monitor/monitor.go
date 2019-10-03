@@ -8,7 +8,7 @@ import (
 
 // Monitors tasks
 type Monitor struct {
-	parameters []*MonitorParameter
+	parameters []*Parameter
 }
 
 var (
@@ -24,7 +24,7 @@ var (
 	}
 )
 
-type MonitorParameter struct {
+type Parameter struct {
 	// Task which to monitor
 	Task mesos.Task
 	// Agent on which the task is running
@@ -35,13 +35,13 @@ type MonitorParameter struct {
 	color string
 }
 
-func NewMonitor(parameters []*MonitorParameter) *Monitor {
+func NewMonitor(parameters []*Parameter) *Monitor {
 	return &Monitor{
 		parameters: parameters,
 	}
 }
 
-func SetLogColor(params []*MonitorParameter) {
+func SetLogColor(params []*Parameter) {
 	for i, p := range params {
 		p.color = Colors[i%len(Colors)]
 	}

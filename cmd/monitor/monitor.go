@@ -86,7 +86,7 @@ func start(input *UserInput) {
 	logStream = make(chan string)
 	done = make(chan struct{})
 
-	params := make([]*monitor.MonitorParameter, 0)
+	params := make([]*monitor.Parameter, 0)
 	// build monitor params
 	for name, task := range tasks {
 		isSelected := false
@@ -103,7 +103,7 @@ func start(input *UserInput) {
 
 		for _, taskInstance := range task {
 			if agentInfo, ok := agents[taskInstance.GetAgentID().Value]; ok {
-				param := &monitor.MonitorParameter{
+				param := &monitor.Parameter{
 					Task:  taskInstance,
 					Agent: agentInfo,
 					Files: []string{"stdout", "stderr"},

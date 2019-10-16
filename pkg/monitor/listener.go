@@ -94,7 +94,11 @@ func (l *Listener) Listen(output chan<- string, commandStream <-chan commands.Co
 	var resp mesos.Response
 	l.timer = time.NewTimer(0).C // right away
 	// TODO configurable log identifiers
-	l.logIdentifier = fmt.Sprintf("%s:%d", l.agent.Hostname, l.task.GetDiscovery().GetPorts().Ports[0].Number)
+	if len(l.task.GetDiscovery().GetPorts().Ports) > 0 {
+		l.logIdentifier = fmt.Sprintf("%s:%d", l.agent.Hostname, l.task.GetDiscovery().GetPorts().Ports[0].Number)
+	} else {
+		l.logIdentifier = fmt.Sprintf("%s", l.agent.Hostname)
+	}
 
 	poll := func() {
 		// TODO what about: http://mesos.apache.org/documentation/latest/operator-http-api/#attach_container_output

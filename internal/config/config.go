@@ -16,7 +16,7 @@ const (
 func init() {
 	if v := os.Getenv("XDG_CONFIG_HOME"); v != "" {
 		configDirPath = path.Join(v, configDirName)
-	} else if v := os.Getenv("HOME"); v != "" {
+	} else if v, err := os.UserHomeDir(); err == nil {
 		configDirPath = path.Join(v, ".config", configDirName)
 	}
 	configFilePath = path.Join(configDirPath, configFileName)

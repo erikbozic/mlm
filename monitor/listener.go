@@ -10,7 +10,7 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli/httpagent"
 	"log"
-	"mlm/pkg/commands"
+	"mlm/commands"
 	"net"
 	"strconv"
 	"strings"
@@ -34,13 +34,13 @@ type Listener struct {
 	color         string
 }
 
-func NewListener(fileName string, task mesos.Task, agentInfo mesos.AgentInfo, color string) (*Listener, error) {
+func NewListener(fileName string, task mesos.Task, agentInfo mesos.AgentInfo, color string, httpScheme string) (*Listener, error) {
 	if task.AgentID.Value != agentInfo.ID.Value {
 		return nil, errors.New("tasks agent id doesn't match provided agent info")
 	}
 
 	// TODO https?
-	agentUrl := fmt.Sprintf("http://%s/api/v1", net.JoinHostPort(agentInfo.GetHostname(), strconv.Itoa(int(agentInfo.GetPort()))))
+	agentUrl := fmt.Sprintf("%s://%s/api/v1",  httpScheme, net.JoinHostPort(agentInfo.GetHostname(), strconv.Itoa(int(agentInfo.GetPort()))))
 	agentSender := httpagent.NewSender(httpcli.New(httpcli.Endpoint(agentUrl)).Send)
 	return &Listener{
 		agentSender: agentSender,

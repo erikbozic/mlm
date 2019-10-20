@@ -8,9 +8,10 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli/httpmaster"
 	"github.com/mesos/mesos-go/api/v1/lib/master/calls"
 	"log"
+	"mlm/commands"
 	"mlm/internal/config"
-	"mlm/pkg/commands"
-	"mlm/pkg/monitor"
+	"mlm/monitor"
+	"net/url"
 	"os"
 	"strings"
 )
@@ -21,10 +22,10 @@ var (
 	logStream     chan string
 	done          chan struct{}
 	commandStream chan commands.Command
+	mesosMasterUrl string
 )
 
 func main() {
-	var mesosMasterUrl string
 	flag.StringVar(&mesosMasterUrl, "m", "", "http url of mesos master (e.g.: http://localhost:5050)")
 	flag.Parse()
 
@@ -117,7 +118,9 @@ func start(input *UserInput) {
 			}
 		}
 	}
-	mon := monitor.NewMonitor(params)
+	// Url must be ok, since we already used it
+	masterUrl, _ := url.Parse(mesosMasterUrl)
+	mon := monitor.NewMonitor(params, masterUrl)
 	go mon.Start(logStream, commandStream, done)
 	go printLogs()
 }
@@ -126,7 +129,7 @@ func handleInput() {
 	reader := bufio.NewReader(os.Stdin)
 	for {
 		text, _ := reader.ReadString('\n')
-		if text == ":b\n" { // back (to task selection)
+		if text == ":b\n" { 			  // back (to task selection)
 			close(done)                   // will stop all listeners
 			close(logStream)              // will stop printLogs func
 			input.SelectedTaskNames = nil // reset selected task names

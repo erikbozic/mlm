@@ -3,12 +3,14 @@ package monitor
 import (
 	mesos "github.com/mesos/mesos-go/api/v1/lib"
 	"log"
-	"mlm/pkg/commands"
+	"mlm/commands"
+	"net/url"
 )
 
 // Monitors tasks
 type Monitor struct {
 	parameters []*Parameter
+	masterUrl  *url.URL
 }
 
 var (
@@ -35,9 +37,10 @@ type Parameter struct {
 	color string
 }
 
-func NewMonitor(parameters []*Parameter) *Monitor {
+func NewMonitor(parameters []*Parameter, masterUrl *url.URL) *Monitor {
 	return &Monitor{
 		parameters: parameters,
+		masterUrl:  masterUrl,
 	}
 }
 
@@ -51,9 +54,10 @@ func SetLogColor(params []*Parameter) {
 func (m *Monitor) Start(output chan string, commandStream <-chan commands.Command, done chan struct{}) {
 	commandChannels := make([]chan<- commands.Command, 0)
 	SetLogColor(m.parameters)
+
 	for _, p := range m.parameters {
 		for _, fileName := range p.Files {
-			listener, err := NewListener(fileName, p.Task, p.Agent, p.color)
+			listener, err := NewListener(fileName, p.Task, p.Agent, p.color, m.masterUrl.Scheme)
 			if err != nil {
 				log.Println("error creating listener: ", err.Error())
 				continue

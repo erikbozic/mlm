@@ -29,6 +29,9 @@ provide it next time you use this binary.
  - `:f {filterString}` issue this command to start filtering log messages on all listeners using the provided filter string
  - `:p` issue this command to pause all listeners
  - `:u` issue  this command to unpause all listeners
+ 
+## Preview
+<a href="https://asciinema.org/a/vEhYYgOmYmZwHFtGCe7QbloSH?autoplay=1"><img src="https://asciinema.org/a/vEhYYgOmYmZwHFtGCe7QbloSH.png?cache=pleaseno" width="720"/></a>
 
 ## Development
 To get started you can setup mesos on you machine easily with the docker image: [mesos/mesos-mini](https://hub.docker.com/r/mesos/mesos-mini/).  

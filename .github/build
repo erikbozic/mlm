@@ -1,3 +1,4 @@
 VERSION="$(git describe --tags | cut -c 3-)"
 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -mod=vendor -o mlm-${VERSION}_linux_amd64 mlm/cmd/monitor
 GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -mod=vendor -o mlm-${VERSION}_darwin_amd64 mlm/cmd/monitor
+GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -mod=vendor -o mlm-${VERSION}_windows_amd64 mlm/cmd/monitor

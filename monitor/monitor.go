@@ -1,7 +1,11 @@
 package monitor
 
 import (
+	"fmt"
 	mesos "github.com/mesos/mesos-go/api/v1/lib"
+	"github.com/mesos/mesos-go/api/v1/lib/httpcli"
+	"github.com/mesos/mesos-go/api/v1/lib/httpcli/httpmaster"
+	"github.com/mesos/mesos-go/api/v1/lib/master/calls"
 	"log"
 	"mlm/commands"
 	"net/url"
@@ -9,8 +13,10 @@ import (
 
 // Monitors tasks
 type Monitor struct {
-	parameters []*Parameter
-	masterUrl  *url.URL
+	parameters   []*Parameter
+	masterUrl    string
+	masterSender calls.Sender
+	allTasks  map[string][]mesos.Task
 }
 
 var (
@@ -37,10 +43,10 @@ type Parameter struct {
 	color string
 }
 
-func NewMonitor(parameters []*Parameter, masterUrl *url.URL) *Monitor {
+func NewMonitor(masterUrl string) *Monitor {
 	return &Monitor{
-		parameters: parameters,
 		masterUrl:  masterUrl,
+		masterSender: httpmaster.NewSender(httpcli.New(httpcli.Endpoint(fmt.Sprintf("%s/api/v1",masterUrl))).Send),
 	}
 }
 
@@ -57,7 +63,9 @@ func (m *Monitor) Start(output chan string, commandStream <-chan commands.Comman
 
 	for _, p := range m.parameters {
 		for _, fileName := range p.Files {
-			listener, err := NewListener(fileName, p.Task, p.Agent, p.color, m.masterUrl.Scheme)
+			u,_ := url.Parse(m.masterUrl)
+
+			listener, err := NewListener(fileName, p.Task, p.Agent, p.color, u.Scheme)
 			if err != nil {
 				log.Println("error creating listener: ", err.Error())
 				continue
